@@ -18,10 +18,10 @@ import {
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
 
 import { AddressDiff } from "@/components/diagrams/address-diff"
 import { Button } from "@/components/ui/button"
+import { InfoTip } from "@/components/ui/info-tip"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
@@ -103,10 +103,12 @@ export function CheckView() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
       <section aria-labelledby="check-title" className="min-w-0">
-        <h1 id="check-title" className="text-3xl font-extrabold tracking-display sm:text-4xl">
-          {c.title}
-        </h1>
-        <p className="mt-2 max-w-[60ch] text-muted-foreground">{c.intro}</p>
+        <div className="flex items-center gap-1.5">
+          <h1 id="check-title" className="text-3xl font-extrabold tracking-display sm:text-4xl">
+            {c.title}
+          </h1>
+          <InfoTip label={app.info}>{c.about}</InfoTip>
+        </div>
 
         <form
           className="mt-6 flex flex-col gap-3 sm:flex-row"
@@ -296,8 +298,8 @@ function ResultCard({ result }: { result: CheckResult }) {
         : result.lookalike
           ? t(c.flagNameLookalike, { name: result.lookalike.contact.name })
           : c.flagName
+    // No toast: the verdict card re-evaluates in place ("You flagged …").
     flagAddress(result.address, name, spam, note)
-    toast.success(c.flagged)
   }
 
   return (
@@ -332,7 +334,6 @@ function ResultCard({ result }: { result: CheckResult }) {
             pastedLabel={c.pastedLabel}
           />
           <p className="mt-3 text-sm font-bold text-destructive">{t(c.differ, { n: result.lookalike.differing })}</p>
-          <p className="text-xs text-muted-foreground">{c.diffLegend}</p>
         </div>
       ) : null}
 

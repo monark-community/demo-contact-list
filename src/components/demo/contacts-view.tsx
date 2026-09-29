@@ -147,7 +147,7 @@ export function ContactsView() {
         <div aria-live="polite" className="mt-6">
           {list.length === 0 ? (
             <div className="flex flex-col items-start gap-4 rounded-3xl border border-dashed p-6 sm:p-8">
-              <p className="max-w-[52ch] text-muted-foreground">
+              <p className="text-muted-foreground">
                 {total === 0 ? l.emptyList : q ? t(l.emptySearch, { q }) : l.emptyFiltered}
               </p>
               {total === 0 ? (

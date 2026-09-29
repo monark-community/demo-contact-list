@@ -1,10 +1,10 @@
 "use client"
 
-import { EyeOffIcon, LockIcon, OctagonAlertIcon, RotateCcwIcon, ShieldOffIcon } from "lucide-react"
+import { LockIcon, OctagonAlertIcon, RotateCcwIcon, ShieldOffIcon } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { InfoTip } from "@/components/ui/info-tip"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { t } from "@/i18n/t"
 import { ADDR } from "@/lib/demo/addresses"
@@ -41,9 +41,9 @@ export function AppsView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
+      <div className="flex items-center gap-1.5">
         <h1 className="text-3xl font-extrabold tracking-display sm:text-4xl">{a.title}</h1>
-        <p className="mt-2 max-w-[62ch] text-muted-foreground">{a.intro}</p>
+        <InfoTip label={app.info}>{a.about}</InfoTip>
       </div>
 
       {request ? (
@@ -100,7 +100,6 @@ export function AppsView() {
             })()}
             animate
           />
-          <NeverCard />
         </section>
       </div>
     </div>
@@ -130,10 +129,8 @@ function RequestCard({ grant, onGranted }: { grant: AppGrant; onGranted: () => v
       () => grantApp(grant.id, scopes),
       { offchain: true, waitMs: [800, 1300] }
     )
-    if (outcome === "confirmed") {
-      toast.success(t(a.granted, { app: meta.name }))
-      onGranted()
-    }
+    // No toast: the preview animates names in and the app joins "Connected".
+    if (outcome === "confirmed") onGranted()
   }
 
   return (
@@ -144,28 +141,22 @@ function RequestCard({ grant, onGranted }: { grant: AppGrant; onGranted: () => v
           <h2 id="request-title" className="text-xl font-extrabold">
             {t(a.requestTitle, { app: meta.name })}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {meta.url} · {meta.body}
-          </p>
+          <p className="text-sm text-muted-foreground">{meta.url}</p>
         </div>
       </div>
-      <p className="mt-4 text-sm">{t(a.requestBody, { app: meta.name })}</p>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <fieldset className="flex flex-col gap-2">
           <legend className="sr-only">{t(a.requestTitle, { app: meta.name })}</legend>
           {SCOPES.map((s) => (
-            <label key={s} className="flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors hover:bg-muted/50 has-focus-visible:ring-3 has-focus-visible:ring-ring/40">
+            <label key={s} className="flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 font-bold transition-colors hover:bg-muted/50 has-focus-visible:ring-3 has-focus-visible:ring-ring/40">
               <input
                 type="checkbox"
                 checked={scopes.includes(s)}
                 onChange={(e) => setScopes((cur) => (e.target.checked ? SCOPES.filter((x) => x === s || cur.includes(x)) : cur.filter((x) => x !== s)))}
-                className="mt-1 size-4 accent-[var(--foreground)]"
+                className="size-4 accent-[var(--foreground)]"
               />
-              <span>
-                <span className="block font-bold">{a.scopes[s].label}</span>
-                <span className="text-sm text-muted-foreground">{a.scopes[s].body}</span>
-              </span>
+              {a.scopes[s]}
             </label>
           ))}
           <p className="flex items-center gap-3 rounded-2xl border border-dashed p-3.5 text-sm font-semibold text-muted-foreground">
@@ -220,10 +211,8 @@ function GrantCard({ grant, onSelect, selected }: { grant: AppGrant; onSelect: (
       () => revokeApp(grant.id),
       { offchain: true, waitMs: [600, 1000] }
     )
-    if (outcome === "confirmed") {
-      toast.success(t(a.revoked, { app: meta.name }))
-      onSelect()
-    }
+    // No toast: the card switches to "Access revoked" and the preview returns to raw addresses.
+    if (outcome === "confirmed") onSelect()
   }
 
   return (
@@ -324,23 +313,5 @@ function AppScreen({ appId, scopes, compact, animate }: { appId: AppId; scopes: 
         })}
       </ul>
     </div>
-  )
-}
-
-function NeverCard() {
-  const { app } = useAppCopy()
-  const n = app.apps.never
-  return (
-    <section aria-labelledby="never-title" className="rounded-3xl border border-dashed p-5">
-      <h3 id="never-title" className="flex items-center gap-2 font-bold">
-        <EyeOffIcon className="size-4" aria-hidden="true" />
-        {n.title}
-      </h3>
-      <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
-        {n.items.map((x) => (
-          <li key={x}>{x}</li>
-        ))}
-      </ul>
-    </section>
   )
 }

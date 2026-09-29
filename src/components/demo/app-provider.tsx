@@ -15,7 +15,6 @@ export interface AppCopy {
   app: Dictionary["app"]
   seed: Dictionary["seed"]
   disclaimer: string
-  demoBadge: string
   close: string
   copy: string
   copied: string

@@ -30,9 +30,13 @@ export function DemoControls() {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        {/* The app bar's one demo element: the (simulated) network, opening the demo controls. */}
+        <Button variant="outline" size="sm" title={c.open} className="px-2.5 sm:px-3">
+          <span className="size-2 rounded-full bg-success" aria-hidden="true" />
+          <span className="hidden sm:inline">{app.network}</span>
+          <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
           <SlidersHorizontalIcon aria-hidden="true" />
-          {c.open}
+          <span className="sr-only lg:not-sr-only">{c.open}</span>
           {demo.settings.failNext || demo.settings.slow ? <span className="size-2 rounded-full bg-warning" aria-hidden="true" /> : null}
         </Button>
       </DialogTrigger>

@@ -1,12 +1,13 @@
 "use client"
 
-import { CheckCircle2Icon, InfoIcon, Loader2Icon, OctagonAlertIcon, PlusIcon, TriangleAlertIcon } from "lucide-react"
+import { CheckCircle2Icon, InfoIcon, Loader2Icon, LockIcon, OctagonAlertIcon, PlusIcon, TriangleAlertIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useId, useMemo, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { InfoTip } from "@/components/ui/info-tip"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
 import { sleep, useTx } from "@/lib/demo/chain"
@@ -18,7 +19,6 @@ import { cn } from "@/lib/utils"
 
 import { useAppCopy } from "./app-provider"
 import { TrustChip, VISIBILITY_ICON } from "./chips"
-import { Disclaimer } from "./disclaimer"
 import { TxFeedback } from "./tx-feedback"
 
 const TRUST: TrustLevel[] = ["trusted", "known", "unverified", "flagged"]
@@ -26,7 +26,7 @@ const VIS: Visibility[] = ["private", "circle", "public"]
 
 export function ContactForm() {
   const demo = useDemo() as DemoState
-  const { app, locale, disclaimer } = useAppCopy()
+  const { app, locale } = useAppCopy()
   const f = app.form
   const router = useRouter()
   const params = useSearchParams()
@@ -112,8 +112,8 @@ export function ContactForm() {
         createdId = addContact(input, hash)
       }
     )
+    // No toast: the contact page opens with its content ID and the confirmed transaction.
     if (outcome === "confirmed" && createdId) {
-      toast.success(f.published, { description: name.trim() })
       router.push(href(locale, `/app/contacts/${createdId}`))
     }
   }
@@ -142,11 +142,10 @@ export function ContactForm() {
       <h1 id="form-title" className="mt-3 text-3xl font-extrabold tracking-display sm:text-4xl">
         {f.title}
       </h1>
-      <p className="mt-2 text-muted-foreground">{f.intro}</p>
 
       <div className="mt-8 flex flex-col gap-6">
         <Section title={f.sections.address}>
-          <Field id={`${uid}-address`} label={f.address} help={f.addressHelp} error={showAddressState && addressError && !check?.contact ? addressError : null}>
+          <Field id={`${uid}-address`} label={f.address} error={showAddressState && addressError && !check?.contact ? addressError : null}>
             <input
               ref={addressRef}
               id={`${uid}-address`}
@@ -160,7 +159,7 @@ export function ContactForm() {
               autoComplete="off"
               spellCheck={false}
               aria-invalid={showAddressState && !!addressError}
-              aria-describedby={`${uid}-address-help ${uid}-address-check`}
+              aria-describedby={`${uid}-address-check`}
               className={inputCls("font-mono")}
             />
           </Field>
@@ -252,7 +251,7 @@ export function ContactForm() {
           </div>
         </Section>
 
-        <Section title={f.sections.tags} description={f.tagsHelp}>
+        <Section title={f.sections.tags}>
           <div role="group" aria-label={f.sections.tags} className="flex flex-wrap gap-1.5">
             {demo.tags.map((x) => {
               const on = tags.includes(x.id)
@@ -297,31 +296,28 @@ export function ContactForm() {
           </div>
         </Section>
 
-        <Section title={f.sections.trust}>
+        <Section title={f.sections.trust} info={<TrustHelp />}>
           <fieldset>
             <legend className="sr-only">{app.trust.label}</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {TRUST.map((lvl) => (
                 <label
                   key={lvl}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
+                    "flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
                     trust === lvl ? "border-foreground bg-secondary/60" : "hover:bg-muted/60"
                   )}
                 >
-                  <input type="radio" name="trust" value={lvl} checked={trust === lvl} onChange={() => setTrust(lvl)} className="mt-1 size-4 accent-[var(--foreground)]" />
-                  <span className="flex flex-col gap-1">
-                    <TrustChip level={lvl} label={app.trust.levels[lvl]} className="self-start" />
-                    <span className="text-sm text-muted-foreground">{app.trust.help[lvl]}</span>
-                  </span>
+                  <input type="radio" name="trust" value={lvl} checked={trust === lvl} onChange={() => setTrust(lvl)} className="size-4 accent-[var(--foreground)]" />
+                  <TrustChip level={lvl} label={app.trust.levels[lvl]} className="self-start" />
                 </label>
               ))}
             </div>
           </fieldset>
         </Section>
 
-        <Section title={f.sections.note}>
-          <Field id={`${uid}-note`} label={f.sections.note} help={f.noteHelp} hideLabel>
+        <Section title={f.sections.note} aside={f.noteHelp}>
+          <Field id={`${uid}-note`} label={f.sections.note} hideLabel>
             <textarea
               id={`${uid}-note`}
               value={note}
@@ -389,15 +385,7 @@ export function ContactForm() {
           </p>
         ) : null}
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-1">
-            {publishes ? (
-              <>
-                <p className="text-xs text-muted-foreground">{f.fee}</p>
-                <Disclaimer text={disclaimer} />
-              </>
-            ) : null}
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          <div className="flex flex-col-reverse gap-2 sm:ml-auto sm:flex-row">
             <Button asChild variant="outline" size="lg">
               <Link href={href(locale, "/app")}>{f.cancel}</Link>
             </Button>
@@ -419,15 +407,38 @@ function inputCls(extra = "") {
   )
 }
 
-function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+function Section({ title, info, aside, children }: { title: string; info?: ReactNode; aside?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-4 rounded-3xl border bg-card p-5 sm:p-6">
-      <div>
+      <div className="flex min-h-8 items-center gap-1.5">
         <h2 className="text-lg font-bold">{title}</h2>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {info}
+        {aside ? (
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+            <LockIcon className="size-3.5" aria-hidden="true" />
+            {aside}
+          </span>
+        ) : null}
       </div>
       {children}
     </section>
+  )
+}
+
+/** The four trust levels, explained on demand (info icon next to the section title). */
+export function TrustHelp() {
+  const { app } = useAppCopy()
+  return (
+    <InfoTip label={app.info}>
+      <dl className="flex flex-col gap-2">
+        {TRUST.map((lvl) => (
+          <div key={lvl}>
+            <dt className="font-bold">{app.trust.levels[lvl]}</dt>
+            <dd className="text-muted-foreground">{app.trust.help[lvl]}</dd>
+          </div>
+        ))}
+      </dl>
+    </InfoTip>
   )
 }
 
