@@ -1,0 +1,28 @@
+import { notFound } from "next/navigation"
+
+import { AppFrame } from "@/components/demo/app-frame"
+import { AppProvider } from "@/components/demo/app-provider"
+import { isLocale } from "@/i18n/config"
+import { getDictionary } from "@/i18n"
+
+export default async function AppLayout({ children, params }: LayoutProps<"/[locale]/app">) {
+  const { locale } = await params
+  if (!isLocale(locale)) notFound()
+  const dict = getDictionary(locale)
+  return (
+    <AppProvider
+      value={{
+        locale,
+        app: dict.app,
+        seed: dict.seed,
+        disclaimer: dict.common.disclaimer,
+        demoBadge: dict.common.demoBadge,
+        close: dict.common.close,
+        copy: dict.common.copy,
+        copied: dict.common.copied,
+      }}
+    >
+      <AppFrame>{children}</AppFrame>
+    </AppProvider>
+  )
+}
