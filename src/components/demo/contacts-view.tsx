@@ -63,7 +63,6 @@ export function ContactsView() {
     [demo.contacts, kind, trust, tag, q, tagLabels]
   )
 
-  const filtered = kind !== "all" || !!trust || !!tag
   const total = demo.contacts.length
   const clear = () => {
     setQ("")

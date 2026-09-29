@@ -112,8 +112,10 @@ function ContactDetail({ contact: c }: { contact: Contact }) {
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-6">
+      {/* On phones both columns flatten into one list ordered by importance; on desktop they are two columns. */}
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          <div className="order-1 min-w-0 lg:order-none">
           <Card title={k.addresses}>
             <ul className="flex flex-col divide-y">
               {c.addresses.map((a) => (
@@ -124,16 +126,27 @@ function ContactDetail({ contact: c }: { contact: Contact }) {
               ))}
             </ul>
           </Card>
-
-          <DetailsCard contact={c} />
-
-          <LogCard contact={c} />
+          </div>
+          <div className="order-3 min-w-0 lg:order-none">
+            <DetailsCard contact={c} />
+          </div>
+          <div className="order-4 min-w-0 lg:order-none">
+            <LogCard contact={c} />
+          </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-6">
-          {!self ? <SignalsCard contact={c} onVerified={() => setJustVerified(true)} /> : null}
-          <VisibilityCard contact={c} />
-          <DangerCard contact={c} />
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          {!self ? (
+            <div className="order-2 min-w-0 lg:order-none">
+              <SignalsCard contact={c} onVerified={() => setJustVerified(true)} />
+            </div>
+          ) : null}
+          <div className="order-5 min-w-0 lg:order-none">
+            <VisibilityCard contact={c} />
+          </div>
+          <div className="order-6 min-w-0 lg:order-none">
+            <DangerCard contact={c} />
+          </div>
         </div>
       </div>
     </div>

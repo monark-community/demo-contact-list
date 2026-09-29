@@ -60,10 +60,11 @@ type Phase = { kind: "idle" } | { kind: "scanning"; address: string } | { kind: 
 
 export function CheckView() {
   const demo = useDemo() as DemoState
-  const { app, locale } = useAppCopy()
+  const { app } = useAppCopy()
   const c = app.check
   const params = useSearchParams()
-  const [value, setValue] = useState("")
+  const initial = params?.get("address") ?? ""
+  const [value, setValue] = useState(initial)
   const [phase, setPhase] = useState<Phase>({ kind: "idle" })
   const [recent, setRecent] = useState<CheckResult[]>([])
   const run = useRef(0)
@@ -88,12 +89,10 @@ export function CheckView() {
   }, [])
 
   // Arriving from the quick check: ?address=0x…
-  const initial = params?.get("address") ?? ""
   const started = useRef(false)
   useEffect(() => {
     if (started.current || !initial) return
     started.current = true
-    setValue(initial)
     void check(initial)
   }, [initial, check])
 
@@ -126,7 +125,7 @@ export function CheckView() {
             placeholder={c.placeholder}
             autoComplete="off"
             spellCheck={false}
-            className="h-12 min-w-0 flex-1 rounded-full border border-input bg-card px-5 font-mono text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 sm:text-base"
+            className="h-12 w-full min-w-0 rounded-full sm:flex-1 border border-input bg-card px-5 font-mono text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 sm:text-base"
           />
           <Button type="submit" size="lg" disabled={!value.trim() || phase.kind === "scanning"} className="h-12">
             <ScanSearchIcon aria-hidden="true" />
@@ -291,7 +290,12 @@ function ResultCard({ result }: { result: CheckResult }) {
       ? t(c.flagNoteLookalike, { name: result.lookalike.contact.name, purpose: (result.lookalike.entry.purpose || seed.mainWallet).toLowerCase() })
       : c.flagNoteGeneric
     const spam = demo.tags.find((x) => x.tone === "caution")?.id
-    const name = result.directory?.kind === "flagged" ? result.directory.name : c.flagName
+    const name =
+      result.directory?.kind === "flagged"
+        ? result.directory.name
+        : result.lookalike
+          ? t(c.flagNameLookalike, { name: result.lookalike.contact.name })
+          : c.flagName
     flagAddress(result.address, name, spam, note)
     toast.success(c.flagged)
   }
