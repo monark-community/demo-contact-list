@@ -1,4 +1,4 @@
-import { ArrowRightIcon, BadgeCheckIcon, GlobeIcon, HandshakeIcon, LinkIcon, LockIcon, ShieldHalfIcon, SmartphoneIcon, UsersIcon } from "lucide-react"
+import { ArrowRightIcon, BadgeCheckIcon, ChevronDownIcon, GlobeIcon, HandshakeIcon, LinkIcon, LockIcon, ShieldHalfIcon, SmartphoneIcon, UsersIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -50,8 +50,7 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
     <div className="flex flex-col">
       {/* Intro */}
       <section className="mx-auto w-full max-w-6xl px-4 pt-12 pb-12 sm:px-6 lg:pt-20" aria-labelledby="how-title">
-        <p className="eyebrow text-primary-ink">{h.eyebrow}</p>
-        <h1 id="how-title" className="mt-4 max-w-3xl text-4xl font-extrabold tracking-display sm:text-5xl">
+        <h1 id="how-title" className="max-w-3xl text-4xl font-extrabold tracking-display sm:text-5xl">
           {h.title}
         </h1>
         <p className="mt-5 max-w-[62ch] text-lg text-muted-foreground">{h.intro}</p>
@@ -64,15 +63,11 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
             <h2 id="anatomy-title" className="text-3xl font-bold tracking-display">
               {a.title}
             </h2>
-            <p className="mt-3 max-w-[56ch] text-muted-foreground">{a.body}</p>
             <ol className="mt-8 grid gap-5 sm:grid-cols-2">
               {parts.map((p, i) => (
                 <li key={p.title} className="flex gap-3">
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-primary text-sm font-extrabold">{i + 1}</span>
-                  <span>
-                    <span className="block font-bold">{p.title}</span>
-                    <span className="text-sm text-muted-foreground">{p.body}</span>
-                  </span>
+                  <span className="pt-0.5 font-bold">{p.title}</span>
                 </li>
               ))}
             </ol>
@@ -205,31 +200,57 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
 
       {/* Developers */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="dev-title">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <div>
-            <h2 id="dev-title" className="text-3xl font-bold tracking-display">
-              {h.dev.title}
-            </h2>
-            <p className="mt-3 max-w-[56ch] text-muted-foreground">{h.dev.body}</p>
-            <h3 className="mt-8 font-bold">{h.dev.scopesTitle}</h3>
-            <dl className="mt-3 flex flex-col gap-3">
-              {h.dev.scopes.map((s) => (
-                <div key={s.name} className="flex gap-3">
-                  <dt className="shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-xs font-semibold">{s.name}</dt>
-                  <dd className="text-sm text-muted-foreground">{s.body}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-5 flex items-center gap-2 text-sm font-semibold">
-              <LockIcon className="size-4 text-primary" aria-hidden="true" />
-              {h.dev.never}
-            </p>
+        <h2 id="dev-title" className="text-3xl font-bold tracking-display">
+          {h.dev.title}
+        </h2>
+        <p className="mt-3 max-w-[60ch] text-muted-foreground">{h.dev.body}</p>
+        <details className="group mt-6 rounded-3xl border bg-card">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-bold sm:px-6 [&::-webkit-details-marker]:hidden">
+            {h.dev.show}
+            <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="grid gap-8 border-t px-5 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <div>
+              <h3 className="font-bold">{h.dev.scopesTitle}</h3>
+              <dl className="mt-3 flex flex-col gap-3">
+                {h.dev.scopes.map((s) => (
+                  <div key={s.name} className="flex gap-3">
+                    <dt className="shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-xs font-semibold">{s.name}</dt>
+                    <dd className="text-sm text-muted-foreground">{s.body}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-5 flex items-center gap-2 text-sm font-semibold">
+                <LockIcon className="size-4 text-primary" aria-hidden="true" />
+                {h.dev.never}
+              </p>
+            </div>
+            <figure aria-label={h.dev.codeLabel} className="min-w-0">
+              <pre className="overflow-x-auto rounded-2xl border bg-secondary/60 p-5 font-mono text-[0.8rem] leading-relaxed sm:text-sm">
+                <code>{code(h.dev.codeInside, h.dev.codeNotes, dict.seed.mainWallet)}</code>
+              </pre>
+            </figure>
           </div>
-          <figure aria-label={h.dev.codeLabel} className="min-w-0">
-            <pre className="overflow-x-auto rounded-3xl border bg-secondary/60 p-5 font-mono text-[0.8rem] leading-relaxed sm:text-sm">
-              <code>{code(h.dev.codeInside, h.dev.codeNotes, dict.seed.mainWallet)}</code>
-            </pre>
-          </figure>
+        </details>
+      </section>
+
+      {/* FAQ */}
+      <section aria-labelledby="faq-title" className="border-t">
+        <div className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
+          <h2 id="faq-title" className="text-3xl font-bold tracking-display">
+            {h.faq.title}
+          </h2>
+          <div className="mt-8 divide-y rounded-3xl border bg-card">
+            {h.faq.items.map((f) => (
+              <details key={f.q} className="group px-5 sm:px-6">
+                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-bold [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <p className="max-w-[68ch] pb-5 text-muted-foreground">{f.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -240,7 +261,6 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
             <h2 id="cta-title" className="text-3xl font-bold tracking-display">
               {h.cta.title}
             </h2>
-            <p className="mt-2 text-muted-foreground">{h.cta.body}</p>
           </div>
           <Button asChild size="lg">
             <Link href={href(locale, "/app/check")}>

@@ -1,4 +1,4 @@
-import { ArrowRightIcon, AppWindowIcon, ChevronDownIcon, OctagonAlertIcon, ScanSearchIcon, UserSearchIcon } from "lucide-react"
+import { ArrowRightIcon, EyeIcon, OctagonAlertIcon, ScanSearchIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
@@ -27,8 +27,6 @@ export async function generateMetadata({ params }: PageProps<"/[locale]">): Prom
   if (!isLocale(locale)) return {}
   return pageMetadata(locale, "/", null, getDictionary(locale).meta.description)
 }
-
-const OUTCOME_ICONS = [ScanSearchIcon, UserSearchIcon, AppWindowIcon]
 const IMAGES = { campus: campusImg, workingGroup: workingGroupImg, studio: studioImg }
 
 function heroRows(locale: Locale): HeroRow[] {
@@ -70,8 +68,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pt-12 pb-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:pt-20 lg:pb-24">
           <div>
-            <p className="eyebrow text-primary-ink">{h.eyebrow}</p>
-            <h1 id="hero-title" className="mt-4 text-[2.25rem] leading-[1.08] font-extrabold tracking-display sm:text-5xl lg:text-[3.75rem]">
+            <h1 id="hero-title" className="text-[2.25rem] leading-[1.08] font-extrabold tracking-display sm:text-5xl lg:text-[3.75rem]">
               {h.title}
             </h1>
             <p className="mt-5 max-w-[34rem] text-lg text-muted-foreground sm:text-xl">{h.sub}</p>
@@ -86,30 +83,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 <Link href={href(locale, "/how-it-works")}>{h.ctaSecondary}</Link>
               </Button>
             </div>
-            <p className="mt-6 text-xs text-muted-foreground">{dict.common.demoBadge}</p>
           </div>
           <HeroCard rows={heroRows(locale)} copy={h.card} />
-        </div>
-      </section>
-
-      {/* Outcomes */}
-      <section aria-labelledby="outcomes-title" className="border-t bg-card/60">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <h2 id="outcomes-title" className="max-w-2xl text-3xl font-bold tracking-display sm:text-4xl">
-            {h.outcomes.title}
-          </h2>
-          <ul className="mt-10 grid gap-8 md:grid-cols-3">
-            {h.outcomes.items.map((o, i) => {
-              const Icon = OUTCOME_ICONS[i] ?? ScanSearchIcon
-              return (
-                <li key={o.title}>
-                  <Icon className="size-7 text-primary" strokeWidth={1.75} aria-hidden="true" />
-                  <h3 className="mt-4 text-xl font-bold">{o.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{o.body}</p>
-                </li>
-              )
-            })}
-          </ul>
         </div>
       </section>
 
@@ -117,8 +92,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <section aria-labelledby="check-title" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-14">
           <div>
-            <p className="eyebrow text-primary-ink">{h.check.eyebrow}</p>
-            <h2 id="check-title" className="mt-3 text-3xl font-bold tracking-display sm:text-4xl">
+            <h2 id="check-title" className="text-3xl font-bold tracking-display sm:text-4xl">
               {h.check.title}
             </h2>
             <p className="mt-4 max-w-[56ch] text-muted-foreground">{h.check.body}</p>
@@ -154,7 +128,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <h2 id="privacy-title" className="max-w-2xl text-3xl font-bold tracking-display sm:text-4xl">
           {h.privacy.title}
         </h2>
-        <p className="mt-3 max-w-[60ch] text-muted-foreground">{h.privacy.intro}</p>
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
           {(["private", "circle", "public"] as const).map((lvl) => {
             const Icon = VISIBILITY_ICON[lvl]
@@ -165,16 +138,15 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 <Icon className="size-7 text-primary" strokeWidth={1.75} aria-hidden="true" />
                 <h3 className="mt-4 text-xl font-bold">{l.title}</h3>
                 <p className="mt-2 flex-1 text-muted-foreground">{l.body}</p>
-                <dl className="mt-5 border-t pt-4 text-sm">
-                  <dt className="text-xs font-semibold text-muted-foreground">{h.privacy.whoSees}</dt>
-                  <dd className="font-bold">{who}</dd>
-                </dl>
-                <p className="mt-3 truncate text-xs text-muted-foreground">{l.example}</p>
+                <p className="mt-5 inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-sm font-bold">
+                  <EyeIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="sr-only">{h.privacy.whoSees}: </span>
+                  {who}
+                </p>
               </li>
             )
           })}
         </ul>
-        <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-dashed px-4 py-2 text-sm font-semibold">{h.privacy.notes}</p>
       </section>
 
       {/* One list, every app */}
@@ -236,26 +208,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </ul>
       </section>
 
-      <SectionDivider />
-
-      {/* FAQ */}
-      <section aria-labelledby="faq-title" className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
-        <h2 id="faq-title" className="text-3xl font-bold tracking-display sm:text-4xl">
-          {h.faq.title}
-        </h2>
-        <div className="mt-8 divide-y rounded-3xl border bg-card">
-          {h.faq.items.map((f) => (
-            <details key={f.q} className="group px-5 sm:px-6">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-bold [&::-webkit-details-marker]:hidden">
-                {f.q}
-                <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <p className="max-w-[68ch] pb-5 text-muted-foreground">{f.a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-
       {/* Closing */}
       <section aria-labelledby="closing-title" className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:px-6 md:flex-row md:items-center md:justify-between lg:py-20">
@@ -263,7 +215,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <h2 id="closing-title" className="text-3xl font-bold tracking-display sm:text-4xl">
               {h.closing.title}
             </h2>
-            <p className="mt-3 max-w-[52ch] text-muted-foreground">{h.closing.body}</p>
           </div>
           <Button asChild size="lg">
             <Link href={href(locale, "/app")}>

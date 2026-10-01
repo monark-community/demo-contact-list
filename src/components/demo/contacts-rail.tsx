@@ -37,7 +37,6 @@ export function ContactsRail() {
           <ScanSearchIcon className="size-4 text-primary" aria-hidden="true" />
           {r.checkTitle}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{r.checkBody}</p>
         <label htmlFor="rail-check" className="sr-only">
           {r.checkLabel}
         </label>

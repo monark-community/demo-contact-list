@@ -70,13 +70,15 @@ src/
     sitemap.ts  robots.ts  icon.svg  globals.css (Monark 2026 tokens)
   components/
     ui/                     shadcn/ui + @monark/ui registry (wallet, connect-wallet, network-badge, tx-status)
-    site/                   Monark standard header, footer, pairing, switches
+    site/                   Monark standard header (brand, Demo chip), footer, switches
     home/  diagrams/        resolving activity card, lookalike diff, app hub
     demo/                   app screens, wallet prompt, tx feedback, chips
   i18n/                     locale config, typed EN/FR dictionaries
   lib/demo/                 simulated wallet, network and data layer
-docs/                       site plan, assets, screenshots
+docs/                       site plan, assets, simplification pass, screenshots
 scripts/screenshots.mjs     Playwright visual check
+scripts/wordcount.mjs       words per page (simplification pass)
+scripts/dictcount.mjs       words of UI copy per dictionary section
 ```
 
 Built with Next.js (App Router, TypeScript strict), Tailwind CSS v4, shadcn/ui on the [Monark UI registry](https://ui.monark.io) and Lucide icons, following the Monark brand guidelines (cream and espresso themes, Nunito Sans, flat orange).

@@ -26,6 +26,7 @@ import { useId, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { InfoTip } from "@/components/ui/info-tip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href } from "@/i18n/config"
@@ -48,7 +49,7 @@ import { cn } from "@/lib/utils"
 import { AddressCopy } from "./address-copy"
 import { useAppCopy } from "./app-provider"
 import { TagChip, TrustChip, VerifiedMark, VISIBILITY_ICON, VisibilityChip } from "./chips"
-import { Disclaimer } from "./disclaimer"
+import { TrustHelp } from "./contact-form"
 import { TxFeedback } from "./tx-feedback"
 
 const TRUST: TrustLevel[] = ["trusted", "known", "unverified", "flagged"]
@@ -62,7 +63,6 @@ export function ContactView({ id }: { id: string }) {
     return (
       <section className="mx-auto flex w-full max-w-lg flex-col items-center py-12 text-center">
         <h1 className="text-3xl font-extrabold tracking-display">{app.contact.notFoundTitle}</h1>
-        <p className="mt-3 text-muted-foreground">{app.contact.notFoundBody}</p>
         <Button asChild size="lg" className="mt-8">
           <Link href={href(locale, "/app")}>{app.contact.back}</Link>
         </Button>
@@ -171,7 +171,7 @@ function Card({ title, children, action, className }: { title: string; children:
 /* ------------------------------------------------------------------------ */
 
 function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified: () => void }) {
-  const { app, locale, disclaimer } = useAppCopy()
+  const { app, locale } = useAppCopy()
   const k = app.contact
   const verify = useTx()
   const vouch = useTx()
@@ -190,23 +190,22 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
       () => markVerified(c.id),
       { offchain: true, waitMs: [2000, 3200] }
     )
+    // No toast on success: the "Verified by owner" stamp lands on the header and in this card.
     if (outcome === "confirmed") {
       onVerified()
-      toast.success(t(k.verifiedToast, { name: c.name }))
     } else if (outcome === "expired") {
       logVerifyExpired(c.id)
     }
   }
 
   const publishVouch = async () => {
-    const outcome = await vouch.run(
+    await vouch.run(
       {
         title: k.vouchPrompt.title,
         rows: [{ label: k.vouchPrompt.statement, value: t(k.vouchPrompt.statementValue, { name: c.name }) }],
       },
       (hash) => recordVouch(c.id, hash)
     )
-    if (outcome === "confirmed") toast.success(k.vouchedToast)
   }
 
   return (
@@ -242,7 +241,12 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
         </div>
 
         <div className="border-t pt-5">
-          <h3 className="text-sm font-bold">{k.vouches}</h3>
+          <div className="flex items-center gap-1">
+            <h3 className="text-sm font-bold">{k.vouches}</h3>
+            <InfoTip label={app.info} className="size-7">
+              {k.vouchHelp}
+            </InfoTip>
+          </div>
           <p className="mt-1 text-sm">{c.vouches > 0 ? t(k.vouchesCount, { n: c.vouches }) : <span className="text-muted-foreground">{k.noVouches}</span>}</p>
           {c.myVouch ? (
             <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
@@ -252,16 +256,12 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
           ) : c.trust === "flagged" ? (
             <p className="mt-2 text-xs text-muted-foreground">{k.noVouchFlagged}</p>
           ) : (
-            <>
-              <p className="mt-2 text-xs text-muted-foreground">{k.vouchHelp}</p>
-              {vouch.state.phase === "idle" || vouch.state.phase === "failed" ? (
-                <Button className="mt-3" onClick={() => void publishVouch()}>
-                  <HandshakeIcon aria-hidden="true" />
-                  {k.vouch}
-                </Button>
-              ) : null}
-              <Disclaimer text={disclaimer} className="mt-2" />
-            </>
+            vouch.state.phase === "idle" || vouch.state.phase === "failed" ? (
+              <Button className="mt-3" onClick={() => void publishVouch()}>
+                <HandshakeIcon aria-hidden="true" />
+                {k.vouch}
+              </Button>
+            ) : null
           )}
           <TxFeedback state={vouch.state} failedLabel={k.vouchFailed} onDismiss={vouch.reset} className="mt-3" />
         </div>
@@ -274,7 +274,10 @@ function TrustPicker({ contact: c }: { contact: Contact }) {
   const { app } = useAppCopy()
   return (
     <fieldset>
-      <legend className="text-sm font-bold">{app.contact.yourLevel}</legend>
+      <legend className="flex items-center gap-1 text-sm font-bold">
+        {app.contact.yourLevel}
+        <TrustHelp />
+      </legend>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         {TRUST.map((lvl) => (
           <label
@@ -289,17 +292,13 @@ function TrustPicker({ contact: c }: { contact: Contact }) {
               name={`trust-${c.id}`}
               value={lvl}
               checked={c.trust === lvl}
-              onChange={() => {
-                saveDetails(c.id, { trust: lvl })
-                toast.success(app.contact.trustSaved, { description: app.trust.levels[lvl] })
-              }}
+              onChange={() => saveDetails(c.id, { trust: lvl })}
               className="sr-only"
             />
             {app.trust.levels[lvl]}
           </label>
         ))}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">{app.trust.help[c.trust]}</p>
     </fieldset>
   )
 }
@@ -574,7 +573,7 @@ function LogCard({ contact: c }: { contact: Contact }) {
 
 function VisibilityCard({ contact: c }: { contact: Contact }) {
   const demo = useDemo() as DemoState
-  const { app, disclaimer, close } = useAppCopy()
+  const { app, close } = useAppCopy()
   const k = app.contact
   const tx = useTx()
   const [open, setOpen] = useState(false)
@@ -590,7 +589,7 @@ function VisibilityCard({ contact: c }: { contact: Contact }) {
   const apply = async () => {
     setOpen(false)
     if (choice === c.visibility && (choice !== "circle" || circleId === c.circleId)) return
-    const outcome = await tx.run(
+    await tx.run(
       {
         title: k.publishPrompt.title,
         rows: [
@@ -600,7 +599,6 @@ function VisibilityCard({ contact: c }: { contact: Contact }) {
       },
       (hash) => changeVisibility(c.id, choice, circleId, hash)
     )
-    if (outcome === "confirmed") toast.success(k.visibilityChanged, { description: label(choice, circleId) })
   }
 
   return (
@@ -680,7 +678,6 @@ function VisibilityCard({ contact: c }: { contact: Contact }) {
               </select>
             </label>
           ) : null}
-          <Disclaimer text={disclaimer} />
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setOpen(false)}>
               {k.cancel}
