@@ -33,7 +33,7 @@
     "eslint-config-next": "16.3.7",
     "playwright": "~1.59.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^6"
   },
   "packageManager": "pnpm@10.28.0",
   "description": "TrustList by Monark: a wallet-owned address book with an address check and lookalike warnings, shared with the apps you choose (simulated testnet demo).",
