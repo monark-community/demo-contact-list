@@ -8,8 +8,9 @@ import { TagChip, TrustChip, VISIBILITY_ICON } from "@/components/demo/chips"
 import { AddressDiff } from "@/components/diagrams/address-diff"
 import { AppHub } from "@/components/diagrams/app-hub"
 import { HeroCard, type HeroRow } from "@/components/home/hero-card"
-import { SectionDivider } from "@/components/site/section-divider"
 import { Button } from "@/components/ui/button"
+import { SectionDivider } from "@/components/ui/section-divider"
+import { SectionHeading } from "@/components/ui/section-heading"
 import { href, isLocale, type Locale } from "@/i18n/config"
 import { getDictionary, t } from "@/i18n"
 import { ADDR, INES_LOOKALIKE } from "@/lib/demo/addresses"
@@ -68,10 +69,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pt-12 pb-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:pt-20 lg:pb-24">
           <div>
-            <h1 id="hero-title" className="text-[2.25rem] leading-[1.08] font-extrabold tracking-display sm:text-5xl lg:text-[3.75rem]">
-              {h.title}
-            </h1>
-            <p className="mt-5 max-w-[34rem] text-lg text-muted-foreground sm:text-xl">{h.sub}</p>
+            <SectionHeading as="h1" size="lg" titleId="hero-title" title={h.title} lead={h.sub} />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg">
                 <Link href={href(locale, "/app")}>
@@ -92,10 +90,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <section aria-labelledby="check-title" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-14">
           <div>
-            <h2 id="check-title" className="text-3xl font-bold tracking-display sm:text-4xl">
-              {h.check.title}
-            </h2>
-            <p className="mt-4 max-w-[56ch] text-muted-foreground">{h.check.body}</p>
+            <SectionHeading titleId="check-title" title={h.check.title} lead={h.check.body} />
             <Button asChild variant="outline" size="lg" className="mt-7">
               <Link href={href(locale, "/app/check")}>
                 <ScanSearchIcon aria-hidden="true" />
@@ -121,13 +116,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </section>
 
-      <SectionDivider />
+      <SectionDivider contained />
 
       {/* Private by default */}
       <section aria-labelledby="privacy-title" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-        <h2 id="privacy-title" className="max-w-2xl text-3xl font-bold tracking-display sm:text-4xl">
-          {h.privacy.title}
-        </h2>
+        <SectionHeading titleId="privacy-title" title={h.privacy.title} className="max-w-2xl" />
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
           {(["private", "circle", "public"] as const).map((lvl) => {
             const Icon = VISIBILITY_ICON[lvl]
@@ -152,12 +145,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       {/* One list, every app */}
       <section aria-labelledby="apps-title" className="border-y bg-card/60">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 id="apps-title" className="text-3xl font-bold tracking-display sm:text-4xl">
-              {h.apps.title}
-            </h2>
-            <p className="mt-3 text-muted-foreground">{h.apps.body}</p>
-          </div>
+          <SectionHeading align="center" titleId="apps-title" title={h.apps.title} lead={h.apps.body} className="mx-auto max-w-2xl" />
           <div className="mt-12">
             <AppHub label={h.apps.diagramLabel} yourList={h.apps.yourList} notesStay={h.apps.notesStay} scopes={h.apps.scopes} apps={h.apps.apps} />
           </div>
@@ -172,9 +160,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
       {/* Who keeps a TrustList */}
       <section aria-labelledby="who-title" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
-        <h2 id="who-title" className="text-3xl font-bold tracking-display sm:text-4xl">
-          {h.who.title}
-        </h2>
+        <SectionHeading titleId="who-title" title={h.who.title} />
         <ul className="mt-10 grid gap-6 md:grid-cols-3">
           {h.who.items.map((item, i) => {
             const photo = PHOTOS[i]
@@ -211,11 +197,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       {/* Closing */}
       <section aria-labelledby="closing-title" className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:px-6 md:flex-row md:items-center md:justify-between lg:py-20">
-          <div>
-            <h2 id="closing-title" className="text-3xl font-bold tracking-display sm:text-4xl">
-              {h.closing.title}
-            </h2>
-          </div>
+          <SectionHeading titleId="closing-title" title={h.closing.title} />
           <Button asChild size="lg">
             <Link href={href(locale, "/app")}>
               {h.closing.cta}
