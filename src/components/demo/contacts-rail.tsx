@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
 import { useDemo } from "@/lib/demo/store"
@@ -40,14 +41,14 @@ export function ContactsRail() {
         <label htmlFor="rail-check" className="sr-only">
           {r.checkLabel}
         </label>
-        <input
+        <Input
           id="rail-check"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="0x…"
           autoComplete="off"
           spellCheck={false}
-          className="mt-3 h-11 w-full rounded-full border border-input bg-background px-4 font-mono text-sm outline-none placeholder:font-sans placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+          className="mt-3 font-mono placeholder:font-sans"
         />
         <Button type="submit" variant="outline" className="mt-2 w-full">
           {r.checkCta}

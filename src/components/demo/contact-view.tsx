@@ -26,7 +26,14 @@ import { useId, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { FieldError } from "@/components/ui/field-error"
 import { InfoTip } from "@/components/ui/info-tip"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { NativeSelect } from "@/components/ui/native-select"
+import { Textarea } from "@/components/ui/textarea"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { TxFeedback } from "@/components/ui/tx-feedback"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href } from "@/i18n/config"
@@ -47,10 +54,9 @@ import { firstName, formatAmount, formatDate, formatDateTime, shortHash } from "
 import { cn } from "@/lib/utils"
 
 import { AddressCopy } from "./address-copy"
-import { useAppCopy } from "./app-provider"
+import { useAppCopy, useTxCopy } from "./app-provider"
 import { TagChip, TrustChip, VerifiedMark, VISIBILITY_ICON, VisibilityChip } from "./chips"
-import { TrustHelp } from "./contact-form"
-import { TxFeedback } from "./tx-feedback"
+import { TagPicker, TrustHelp, VisibilityPicker } from "./contact-form"
 
 const TRUST: TrustLevel[] = ["trusted", "known", "unverified", "flagged"]
 
@@ -176,6 +182,8 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
   const verify = useTx()
   const vouch = useTx()
   const first = firstName(c.name)
+  const verifyCopy = useTxCopy(t(k.verifyExpired, { first }))
+  const vouchCopy = useTxCopy(k.vouchFailed)
 
   const requestVerification = async () => {
     const outcome = await verify.run(
@@ -230,9 +238,9 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
                 </Button>
               ) : null}
               <TxFeedback
-                state={verify.state}
+                {...verify.state}
+                {...verifyCopy}
                 pendingLabel={t(k.verifyWaiting, { first })}
-                failedLabel={t(k.verifyExpired, { first })}
                 onDismiss={verify.reset}
                 className="mt-3"
               />
@@ -263,7 +271,7 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
               </Button>
             ) : null
           )}
-          <TxFeedback state={vouch.state} failedLabel={k.vouchFailed} onDismiss={vouch.reset} className="mt-3" />
+          <TxFeedback {...vouch.state} {...vouchCopy} onDismiss={vouch.reset} className="mt-3" />
         </div>
       </div>
     </Card>
@@ -273,33 +281,28 @@ function SignalsCard({ contact: c, onVerified }: { contact: Contact; onVerified:
 function TrustPicker({ contact: c }: { contact: Contact }) {
   const { app } = useAppCopy()
   return (
-    <fieldset>
-      <legend className="flex items-center gap-1 text-sm font-bold">
-        {app.contact.yourLevel}
+    <div>
+      <div className="flex items-center gap-1">
+        <h3 id={`trust-${c.id}`} className="text-sm font-bold">
+          {app.contact.yourLevel}
+        </h3>
         <TrustHelp />
-      </legend>
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
-        {TRUST.map((lvl) => (
-          <label
-            key={lvl}
-            className={cn(
-              "flex h-11 cursor-pointer items-center justify-center rounded-full border px-2 text-sm font-semibold transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
-              c.trust === lvl ? "border-foreground bg-foreground text-background" : "border-input hover:bg-muted"
-            )}
-          >
-            <input
-              type="radio"
-              name={`trust-${c.id}`}
-              value={lvl}
-              checked={c.trust === lvl}
-              onChange={() => saveDetails(c.id, { trust: lvl })}
-              className="sr-only"
-            />
-            {app.trust.levels[lvl]}
-          </label>
-        ))}
       </div>
-    </fieldset>
+      <ToggleGroup
+        type="single"
+        variant="chip"
+        aria-labelledby={`trust-${c.id}`}
+        value={c.trust}
+        onValueChange={(v) => v && saveDetails(c.id, { trust: v as TrustLevel })}
+        className="mt-2 grid w-full grid-cols-2"
+      >
+        {TRUST.map((lvl) => (
+          <ToggleGroupItem key={lvl} value={lvl} className="px-2 pointer-coarse:h-11">
+            {app.trust.levels[lvl]}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
   )
 }
 
@@ -340,9 +343,6 @@ function DetailsCard({ contact: c }: { contact: Contact }) {
     setEditing(false)
     toast.success(k.savedLocal)
   }
-
-  const inputCls =
-    "h-11 w-full rounded-full border border-input bg-background px-4 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
 
   return (
     <Card
@@ -391,62 +391,37 @@ function DetailsCard({ contact: c }: { contact: Contact }) {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor={`${uid}-name`} className="text-sm font-bold">
-                {k.name}
-              </label>
-              <input id={`${uid}-name`} value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!name.trim()} className={inputCls} />
-              {!name.trim() ? (
-                <p role="alert" className="text-sm font-semibold text-destructive">
-                  {app.form.errors.nameRequired}
-                </p>
-              ) : null}
+              <Label htmlFor={`${uid}-name`}>{k.name}</Label>
+              <Input id={`${uid}-name`} value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!name.trim()} />
+              <FieldError>{!name.trim() ? app.form.errors.nameRequired : null}</FieldError>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor={`${uid}-role`} className="text-sm font-bold">
-                {k.role}
-              </label>
-              <input id={`${uid}-role`} value={role} onChange={(e) => setRole(e.target.value)} className={inputCls} />
+              <Label htmlFor={`${uid}-role`}>{k.role}</Label>
+              <Input id={`${uid}-role`} value={role} onChange={(e) => setRole(e.target.value)} />
             </div>
             {c.addresses.map((a, i) => (
               <div key={a.address} className="flex flex-col gap-1.5">
-                <label htmlFor={`${uid}-p${i}`} className="text-sm font-bold">
+                <Label htmlFor={`${uid}-p${i}`}>
                   {app.form.purpose} · <span className="font-mono font-normal">{a.address.slice(0, 6)}…{a.address.slice(-4)}</span>
-                </label>
-                <input
+                </Label>
+                <Input
                   id={`${uid}-p${i}`}
                   value={purposes[i] ?? ""}
                   onChange={(e) => setPurposes((p) => p.map((x, j) => (j === i ? e.target.value : x)))}
-                  className={inputCls}
                 />
               </div>
             ))}
           </div>
           <fieldset>
             <legend className="text-sm font-bold">{k.tags}</legend>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {demo.tags.map((x) => {
-                const on = tags.includes(x.id)
-                return (
-                  <button
-                    key={x.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setTags((cur) => (on ? cur.filter((y) => y !== x.id) : [...cur, x.id]))}
-                    className={cn(
-                      "inline-flex h-9 items-center rounded-full border px-3 text-sm font-semibold transition-colors pointer-coarse:h-11",
-                      on ? "border-foreground bg-foreground text-background" : "border-input hover:bg-muted"
-                    )}
-                  >
-                    {x.label}
-                  </button>
-                )
-              })}
+            <div className="mt-2">
+              <TagPicker label={k.tags} value={tags} onChange={setTags} />
             </div>
             <div className="mt-2 flex gap-2">
               <label htmlFor={`${uid}-newtag`} className="sr-only">
                 {app.form.newTag}
               </label>
-              <input
+              <Input
                 id={`${uid}-newtag`}
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
@@ -462,12 +437,11 @@ function DetailsCard({ contact: c }: { contact: Contact }) {
                 }}
                 placeholder={app.form.newTag}
                 maxLength={32}
-                className={cn(inputCls, "max-w-xs")}
+                className="max-w-xs"
               />
               <Button
                 type="button"
                 variant="outline"
-                className="h-11"
                 disabled={!newTag.trim()}
                 onClick={() => {
                   const id = createTag(newTag)
@@ -481,16 +455,8 @@ function DetailsCard({ contact: c }: { contact: Contact }) {
             </div>
           </fieldset>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor={`${uid}-note`} className="text-sm font-bold">
-              {k.note}
-            </label>
-            <textarea
-              id={`${uid}-note`}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={4}
-              className="w-full rounded-2xl border border-input bg-background px-4 py-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
-            />
+            <Label htmlFor={`${uid}-note`}>{k.note}</Label>
+            <Textarea id={`${uid}-note`} value={note} onChange={(e) => setNote(e.target.value)} rows={4} />
             <p className="text-xs text-muted-foreground">{app.form.noteHelp}</p>
           </div>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -576,6 +542,7 @@ function VisibilityCard({ contact: c }: { contact: Contact }) {
   const { app, close } = useAppCopy()
   const k = app.contact
   const tx = useTx()
+  const txCopy = useTxCopy()
   const [open, setOpen] = useState(false)
   const [choice, setChoice] = useState<Visibility>(c.visibility)
   const [circleId, setCircleId] = useState(c.circleId ?? demo.circles[0]?.id ?? "")
@@ -630,55 +597,28 @@ function VisibilityCard({ contact: c }: { contact: Contact }) {
           {k.change}
         </Button>
       ) : null}
-      <TxFeedback state={tx.state} onRetry={() => void apply()} onDismiss={tx.reset} className="mt-3" />
+      <TxFeedback {...tx.state} {...txCopy} onRetry={() => void apply()} onDismiss={tx.reset} className="mt-3" />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent closeLabel={close} className="max-w-[calc(100%-2rem)] rounded-3xl sm:max-w-lg">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-extrabold">{t(k.changeTitle, { name: c.name })}</DialogTitle>
+        <DialogContent closeLabel={close} className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t(k.changeTitle, { name: c.name })}</DialogTitle>
             <DialogDescription>{k.changeBody}</DialogDescription>
           </DialogHeader>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="sr-only">{app.visibility.label}</legend>
-            {(["private", "circle", "public"] as const).map((v) => {
-              const VIcon = VISIBILITY_ICON[v]
-              return (
-                <label
-                  key={v}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
-                    choice === v ? "border-foreground bg-secondary/60" : "hover:bg-muted/60"
-                  )}
-                >
-                  <input type="radio" name="vis" value={v} checked={choice === v} onChange={() => setChoice(v)} className="mt-1 size-4 accent-[var(--foreground)]" />
-                  <span>
-                    <span className="flex items-center gap-2 font-bold">
-                      <VIcon className="size-4" aria-hidden="true" />
-                      {app.visibility.levels[v]}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{app.visibility.help[v]}</span>
-                  </span>
-                </label>
-              )
-            })}
-          </fieldset>
+          <VisibilityPicker label={app.visibility.label} value={choice} onChange={setChoice} />
           {choice === "circle" ? (
-            <label className="flex flex-col gap-1.5 text-sm font-bold">
-              {app.form.circle}
-              <select
-                value={circleId}
-                onChange={(e) => setCircleId(e.target.value)}
-                className="h-11 rounded-full border border-input bg-background px-4 text-base font-normal outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`circle-${c.id}`}>{app.form.circle}</Label>
+              <NativeSelect id={`circle-${c.id}`} value={circleId} onChange={(e) => setCircleId(e.target.value)} className="w-full">
                 {demo.circles.map((x) => (
                   <option key={x.id} value={x.id}>
                     {x.name}
                   </option>
                 ))}
-              </select>
-            </label>
+              </NativeSelect>
+            </div>
           ) : null}
-          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               {k.cancel}
             </Button>
@@ -695,6 +635,7 @@ function DangerCard({ contact: c }: { contact: Contact }) {
   const k = app.contact
   const router = useRouter()
   const tx = useTx()
+  const txCopy = useTxCopy()
   const [open, setOpen] = useState(false)
   const published = c.visibility !== "private"
 
@@ -719,14 +660,14 @@ function DangerCard({ contact: c }: { contact: Contact }) {
         {tx.busy ? <Loader2Icon className="animate-spin" aria-hidden="true" /> : <Trash2Icon aria-hidden="true" />}
         {k.delete}
       </Button>
-      <TxFeedback state={tx.state} onRetry={() => void remove()} onDismiss={tx.reset} hideConfirmed className="mt-3" />
+      <TxFeedback {...tx.state} {...txCopy} onRetry={() => void remove()} onDismiss={tx.reset} hideConfirmed className="mt-3" />
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent closeLabel={close} className="max-w-[calc(100%-2rem)] rounded-3xl sm:max-w-md">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-extrabold">{t(k.deleteTitle, { name: c.name })}</DialogTitle>
+        <DialogContent closeLabel={close}>
+          <DialogHeader>
+            <DialogTitle>{t(k.deleteTitle, { name: c.name })}</DialogTitle>
             <DialogDescription>{published ? k.deletePublished : k.deletePrivate}</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} autoFocus>
               {k.cancel}
             </Button>

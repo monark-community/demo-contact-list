@@ -4,7 +4,10 @@ import { LockIcon, OctagonAlertIcon, RotateCcwIcon, ShieldOffIcon } from "lucide
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { FieldError } from "@/components/ui/field-error"
 import { InfoTip } from "@/components/ui/info-tip"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { TxFeedback } from "@/components/ui/tx-feedback"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { t } from "@/i18n/t"
 import { ADDR } from "@/lib/demo/addresses"
@@ -16,10 +19,9 @@ import type { AppGrant, AppId, DemoState, Scope } from "@/lib/demo/types"
 import { formatDate, shortAddress } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useAppCopy } from "./app-provider"
+import { useAppCopy, useTxCopy } from "./app-provider"
 import { AppMark } from "./app-mark"
 import { TrustChip } from "./chips"
-import { TxFeedback } from "./tx-feedback"
 
 const SCOPES: Scope[] = ["names", "trust", "warnings"]
 
@@ -75,22 +77,20 @@ export function AppsView() {
           <h2 id="preview-title" className="text-xl font-bold">
             {t(a.previewTitle, { app: a.meta[previewId].name })}
           </h2>
-          <div role="group" aria-label={app.tabs.apps} className="flex flex-wrap gap-1.5">
+          <ToggleGroup
+            type="single"
+            variant="chip"
+            size="sm"
+            aria-label={app.tabs.apps}
+            value={previewId}
+            onValueChange={(v) => v && setPreviewId(v as AppId)}
+          >
             {demo.apps.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                aria-pressed={previewId === g.id}
-                onClick={() => setPreviewId(g.id)}
-                className={cn(
-                  "inline-flex h-9 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors pointer-coarse:h-11",
-                  previewId === g.id ? "border-foreground bg-foreground text-background" : "border-input hover:bg-muted"
-                )}
-              >
+              <ToggleGroupItem key={g.id} value={g.id} className="pointer-coarse:h-11">
                 {a.meta[g.id].name}
-              </button>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
           <AppScreen
             key={`${previewId}-${animateKey}`}
             appId={previewId}
@@ -111,6 +111,7 @@ function RequestCard({ grant, onGranted }: { grant: AppGrant; onGranted: () => v
   const a = app.apps
   const meta = a.meta[grant.id]
   const tx = useTx()
+  const txCopy = useTxCopy()
   const [scopes, setScopes] = useState<Scope[]>(grant.scopes)
   const [declined, setDeclined] = useState(false)
 
@@ -167,24 +168,24 @@ function RequestCard({ grant, onGranted }: { grant: AppGrant; onGranted: () => v
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-xs font-bold tracking-wide text-muted-foreground uppercase">{a.before}</p>
+            <p className="eyebrow mb-2 text-muted-foreground">{a.before}</p>
             <AppScreen appId={grant.id} scopes={[]} compact />
           </div>
           <div>
-            <p className="mb-2 text-xs font-bold tracking-wide text-primary-ink uppercase">{a.after}</p>
+            <p className="eyebrow mb-2 text-primary-ink">{a.after}</p>
             <AppScreen appId={grant.id} scopes={scopes} compact />
           </div>
         </div>
       </div>
 
       <div className="mt-5 flex flex-col gap-3">
-        <TxFeedback state={tx.state} onDismiss={tx.reset} />
+        <TxFeedback {...tx.state} {...txCopy} onDismiss={tx.reset} />
         {declined ? (
           <p role="status" className="text-sm text-muted-foreground">
             {t(a.declined, { app: meta.name })}
           </p>
         ) : null}
-        {scopes.length === 0 ? <p className="text-sm font-semibold text-destructive">{a.needOne}</p> : null}
+        {scopes.length === 0 ? <FieldError>{a.needOne}</FieldError> : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="outline" size="lg" onClick={() => setDeclined(true)} disabled={tx.busy}>
             {a.decline}
@@ -203,6 +204,7 @@ function GrantCard({ grant, onSelect, selected }: { grant: AppGrant; onSelect: (
   const a = app.apps
   const meta = a.meta[grant.id]
   const tx = useTx()
+  const txCopy = useTxCopy()
   const revoked = grant.status === "revoked"
 
   const revoke = async () => {
@@ -243,7 +245,7 @@ function GrantCard({ grant, onSelect, selected }: { grant: AppGrant; onSelect: (
           {grant.since ? <span className="ml-1 text-xs text-muted-foreground">{t(a.since, { date: formatDate(grant.since, locale) })}</span> : null}
         </div>
       )}
-      <TxFeedback state={tx.state} onDismiss={tx.reset} className="mt-3" />
+      <TxFeedback {...tx.state} {...txCopy} onDismiss={tx.reset} className="mt-3" />
       <div className="mt-4 flex flex-wrap gap-2">
         {revoked ? (
           <Button variant="outline" size="sm" onClick={() => requestAgain(grant.id)}>
