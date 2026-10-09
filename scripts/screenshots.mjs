@@ -86,7 +86,7 @@ async function openControls(page) {
 
 async function toggleFailNext(page) {
   await openControls(page)
-  await page.getByRole("dialog").getByRole("switch").first().click()
+  await page.getByRole("dialog").getByRole("switch", { name: /next network step|prochaine étape/i }).click()
   await page.keyboard.press("Escape")
   await page.getByRole("dialog").waitFor({ state: "detached" })
 }

@@ -5,6 +5,10 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Empty, EmptyContent, EmptyDescription } from "@/components/ui/empty"
+import { Input } from "@/components/ui/input"
+import { NativeSelect } from "@/components/ui/native-select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
@@ -95,7 +99,7 @@ export function ContactsView() {
               {l.searchLabel}
             </label>
             <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input
+            <Input
               id="contact-search"
               type="search"
               value={q}
@@ -103,26 +107,24 @@ export function ContactsView() {
               placeholder={l.searchPlaceholder}
               autoComplete="off"
               spellCheck={false}
-              className="h-12 w-full rounded-full border border-input bg-card pr-4 pl-11 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="h-12 pr-4 pl-11"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div role="group" aria-label={l.kindsLabel} className="flex flex-wrap gap-1.5">
+            <ToggleGroup
+              type="single"
+              variant="chip"
+              size="sm"
+              aria-label={l.kindsLabel}
+              value={kind}
+              onValueChange={(v) => v && setKind(v as KindFilter)}
+            >
               {(["all", "person", "org", "self"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  aria-pressed={kind === k}
-                  onClick={() => setKind(k)}
-                  className={cn(
-                    "inline-flex h-9 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors duration-150 pointer-coarse:h-11",
-                    kind === k ? "border-foreground bg-foreground text-background" : "border-input text-foreground hover:bg-muted"
-                  )}
-                >
+                <ToggleGroupItem key={k} value={k} className="pointer-coarse:h-11">
                   {l.kinds[k]}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
             <div className="flex flex-wrap gap-2 sm:ml-auto">
               <SelectPill label={l.trustLabel} value={trust} onChange={(v) => setTrust(v as TrustLevel | "")}>
                 <option value="">{l.anyTrust}</option>
@@ -146,10 +148,11 @@ export function ContactsView() {
 
         <div aria-live="polite" className="mt-6">
           {list.length === 0 ? (
-            <div className="flex flex-col items-start gap-4 rounded-3xl border border-dashed p-6 sm:p-8">
-              <p className="text-muted-foreground">
+            <Empty align="start" role="status">
+              <EmptyDescription>
                 {total === 0 ? l.emptyList : q ? t(l.emptySearch, { q }) : l.emptyFiltered}
-              </p>
+              </EmptyDescription>
+              <EmptyContent>
               {total === 0 ? (
                 <Button asChild>
                   <Link href={href(locale, "/app/new")}>
@@ -163,7 +166,8 @@ export function ContactsView() {
                   {l.clear}
                 </Button>
               )}
-            </div>
+              </EmptyContent>
+            </Empty>
           ) : (
             <ul className="flex flex-col divide-y overflow-hidden rounded-3xl border bg-card">
               {list.map((c) => (
@@ -193,20 +197,16 @@ function SelectPill({
   children: React.ReactNode
 }) {
   return (
-    <label className="relative inline-flex">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cn(
-          "h-9 max-w-[12rem] appearance-none truncate rounded-full border bg-card pr-8 pl-3.5 text-sm font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/40 pointer-coarse:h-11",
-          value ? "border-foreground" : "border-input"
-        )}
-      >
-        {children}
-      </select>
-      <ChevronRightIcon className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 rotate-90 text-muted-foreground" aria-hidden="true" />
-    </label>
+    <NativeSelect
+      size="sm"
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      // An active filter keeps a foreground border.
+      className={cn("max-w-[12rem]", value && "[&_select]:border-foreground")}
+    >
+      {children}
+    </NativeSelect>
   )
 }
 

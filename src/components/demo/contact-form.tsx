@@ -7,7 +7,15 @@ import { useId, useMemo, useRef, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { FieldError } from "@/components/ui/field-error"
 import { InfoTip } from "@/components/ui/info-tip"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { NativeSelect } from "@/components/ui/native-select"
+import { RadioGroup, RadioGroupItem, RadioGroupItemDescription, RadioGroupItemTitle } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { TxFeedback } from "@/components/ui/tx-feedback"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
 import { sleep, useTx } from "@/lib/demo/chain"
@@ -17,9 +25,8 @@ import { getDemo, useDemo } from "@/lib/demo/store"
 import type { ContactKind, DemoState, TrustLevel, Visibility } from "@/lib/demo/types"
 import { cn } from "@/lib/utils"
 
-import { useAppCopy } from "./app-provider"
+import { useAppCopy, useTxCopy } from "./app-provider"
 import { TrustChip, VISIBILITY_ICON } from "./chips"
-import { TxFeedback } from "./tx-feedback"
 
 const TRUST: TrustLevel[] = ["trusted", "known", "unverified", "flagged"]
 const VIS: Visibility[] = ["private", "circle", "public"]
@@ -32,6 +39,7 @@ export function ContactForm() {
   const params = useSearchParams()
   const uid = useId()
   const tx = useTx()
+  const txCopy = useTxCopy(f.publishFailed)
 
   const [address, setAddress] = useState(() => params?.get("address") ?? "")
   const [kind, setKind] = useState<ContactKind>("person")
@@ -146,7 +154,7 @@ export function ContactForm() {
       <div className="mt-8 flex flex-col gap-6">
         <Section title={f.sections.address}>
           <Field id={`${uid}-address`} label={f.address} error={showAddressState && addressError && !check?.contact ? addressError : null}>
-            <input
+            <Input
               ref={addressRef}
               id={`${uid}-address`}
               value={address}
@@ -160,7 +168,7 @@ export function ContactForm() {
               spellCheck={false}
               aria-invalid={showAddressState && !!addressError}
               aria-describedby={`${uid}-address-check`}
-              className={inputCls("font-mono")}
+              className="font-mono"
             />
           </Field>
           <div id={`${uid}-address-check`} aria-live="polite">
@@ -210,72 +218,52 @@ export function ContactForm() {
         </Section>
 
         <Section title={f.sections.who}>
-          <fieldset>
-            <legend className="text-sm font-bold">{f.kind}</legend>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="flex flex-col gap-2">
+            <Label id={`${uid}-kind`}>{f.kind}</Label>
+            <ToggleGroup
+              type="single"
+              variant="pill"
+              aria-labelledby={`${uid}-kind`}
+              value={kind}
+              onValueChange={(v) => v && setKind(v as ContactKind)}
+            >
               {(["person", "org", "self"] as const).map((k) => (
-                <label
-                  key={k}
-                  className={cn(
-                    "inline-flex h-10 cursor-pointer items-center rounded-full border px-4 text-sm font-semibold transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40 pointer-coarse:h-11",
-                    kind === k ? "border-foreground bg-foreground text-background" : "border-input hover:bg-muted"
-                  )}
-                >
-                  <input type="radio" name="kind" value={k} checked={kind === k} onChange={() => setKind(k)} className="sr-only" />
+                <ToggleGroupItem key={k} value={k}>
                   {app.kinds[k]}
-                </label>
+                </ToggleGroupItem>
               ))}
-            </div>
-          </fieldset>
+            </ToggleGroup>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id={`${uid}-name`} label={f.name} error={submitted ? nameError : null}>
-              <input
+              <Input
                 ref={nameRef}
                 id={`${uid}-name`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={f.namePlaceholder}
                 aria-invalid={submitted && !!nameError}
-                className={inputCls()}
               />
             </Field>
             <Field id={`${uid}-role`} label={f.role}>
-              <input id={`${uid}-role`} value={role} onChange={(e) => setRole(e.target.value)} placeholder={f.rolePlaceholder} className={inputCls()} />
+              <Input id={`${uid}-role`} value={role} onChange={(e) => setRole(e.target.value)} placeholder={f.rolePlaceholder} />
             </Field>
             <Field id={`${uid}-purpose`} label={f.purpose}>
-              <input id={`${uid}-purpose`} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={f.purposePlaceholder} className={inputCls()} />
+              <Input id={`${uid}-purpose`} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={f.purposePlaceholder} />
             </Field>
             <Field id={`${uid}-met`} label={f.met}>
-              <input id={`${uid}-met`} value={met} onChange={(e) => setMet(e.target.value)} placeholder={f.metPlaceholder} className={inputCls()} />
+              <Input id={`${uid}-met`} value={met} onChange={(e) => setMet(e.target.value)} placeholder={f.metPlaceholder} />
             </Field>
           </div>
         </Section>
 
         <Section title={f.sections.tags}>
-          <div role="group" aria-label={f.sections.tags} className="flex flex-wrap gap-1.5">
-            {demo.tags.map((x) => {
-              const on = tags.includes(x.id)
-              return (
-                <button
-                  key={x.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setTags((cur) => (on ? cur.filter((y) => y !== x.id) : [...cur, x.id]))}
-                  className={cn(
-                    "inline-flex h-9 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors pointer-coarse:h-11",
-                    on ? "border-foreground bg-foreground text-background" : "border-input hover:bg-muted"
-                  )}
-                >
-                  {x.label}
-                </button>
-              )
-            })}
-          </div>
+          <TagPicker label={f.sections.tags} value={tags} onChange={setTags} />
           <div className="flex gap-2">
             <label htmlFor={`${uid}-newtag`} className="sr-only">
               {f.newTag}
             </label>
-            <input
+            <Input
               id={`${uid}-newtag`}
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
@@ -287,9 +275,9 @@ export function ContactForm() {
               }}
               placeholder={f.newTag}
               maxLength={32}
-              className={inputCls("max-w-xs")}
+              className="max-w-xs"
             />
-            <Button type="button" variant="outline" onClick={addNewTag} disabled={!newTag.trim()} className="h-11">
+            <Button type="button" variant="outline" onClick={addNewTag} disabled={!newTag.trim()}>
               <PlusIcon aria-hidden="true" />
               {f.addTag}
             </Button>
@@ -297,72 +285,38 @@ export function ContactForm() {
         </Section>
 
         <Section title={f.sections.trust} info={<TrustHelp />}>
-          <fieldset>
-            <legend className="sr-only">{app.trust.label}</legend>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {TRUST.map((lvl) => (
-                <label
-                  key={lvl}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
-                    trust === lvl ? "border-foreground bg-secondary/60" : "hover:bg-muted/60"
-                  )}
-                >
-                  <input type="radio" name="trust" value={lvl} checked={trust === lvl} onChange={() => setTrust(lvl)} className="size-4 accent-[var(--foreground)]" />
-                  <TrustChip level={lvl} label={app.trust.levels[lvl]} className="self-start" />
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <RadioGroup
+            variant="card"
+            aria-label={app.trust.label}
+            value={trust}
+            onValueChange={(v) => setTrust(v as TrustLevel)}
+            className="grid-cols-2 sm:grid-cols-4"
+          >
+            {TRUST.map((lvl) => (
+              <RadioGroupItem key={lvl} value={lvl}>
+                <TrustChip level={lvl} label={app.trust.levels[lvl]} className="self-start" />
+              </RadioGroupItem>
+            ))}
+          </RadioGroup>
         </Section>
 
         <Section title={f.sections.note} aside={f.noteHelp}>
           <Field id={`${uid}-note`} label={f.sections.note} hideLabel>
-            <textarea
-              id={`${uid}-note`}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={f.notePlaceholder}
-              rows={3}
-              className="w-full rounded-2xl border border-input bg-card px-4 py-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
-            />
+            <Textarea id={`${uid}-note`} value={note} onChange={(e) => setNote(e.target.value)} placeholder={f.notePlaceholder} rows={3} />
           </Field>
         </Section>
 
         <Section title={f.sections.visibility}>
-          <fieldset>
-            <legend className="sr-only">{app.visibility.label}</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {VIS.map((v) => {
-                const Icon = VISIBILITY_ICON[v]
-                return (
-                  <label
-                    key={v}
-                    className={cn(
-                      "flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/40",
-                      visibility === v ? "border-foreground bg-secondary/60" : "hover:bg-muted/60"
-                    )}
-                  >
-                    <span className="flex items-center gap-2 font-bold">
-                      <input type="radio" name="visibility" value={v} checked={visibility === v} onChange={() => setVisibility(v)} className="size-4 accent-[var(--foreground)]" />
-                      <Icon className="size-4" aria-hidden="true" />
-                      {app.visibility.levels[v]}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{app.visibility.help[v]}</span>
-                  </label>
-                )
-              })}
-            </div>
-          </fieldset>
+          <VisibilityPicker label={app.visibility.label} value={visibility} onChange={setVisibility} className="sm:grid-cols-3" />
           {visibility === "circle" ? (
             <Field id={`${uid}-circle`} label={f.circle}>
-              <select id={`${uid}-circle`} value={circleId} onChange={(e) => setCircleId(e.target.value)} className={inputCls("max-w-sm")}>
+              <NativeSelect id={`${uid}-circle`} value={circleId} onChange={(e) => setCircleId(e.target.value)} className="w-full max-w-sm">
                 {demo.circles.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </Field>
           ) : null}
         </Section>
@@ -370,9 +324,9 @@ export function ContactForm() {
 
       <div className="sticky bottom-0 z-10 -mx-4 mt-8 border-t bg-background/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
         <TxFeedback
-          state={tx.state}
+          {...tx.state}
+          {...txCopy}
           pendingLabel={f.publishing}
-          failedLabel={f.publishFailed}
           onRetry={() => void submit()}
           onDismiss={tx.reset}
           hideConfirmed
@@ -400,10 +354,48 @@ export function ContactForm() {
   )
 }
 
-function inputCls(extra = "") {
-  return cn(
-    "h-11 w-full rounded-full border border-input bg-card px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 aria-invalid:border-destructive",
-    extra
+/** The list's tags as multi-select chips. */
+export function TagPicker({ label, value, onChange }: { label: string; value: string[]; onChange: (tags: string[]) => void }) {
+  const demo = useDemo() as DemoState
+  return (
+    <ToggleGroup type="multiple" variant="chip" size="sm" aria-label={label} value={value} onValueChange={onChange}>
+      {demo.tags.map((x) => (
+        <ToggleGroupItem key={x.id} value={x.id} className="pointer-coarse:h-11">
+          {x.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
+}
+
+/** Private / circle / public, as radio cards with an icon and a one-line explanation. */
+export function VisibilityPicker({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string
+  value: Visibility
+  onChange: (v: Visibility) => void
+  className?: string
+}) {
+  const { app } = useAppCopy()
+  return (
+    <RadioGroup variant="card" aria-label={label} value={value} onValueChange={(v) => onChange(v as Visibility)} className={className}>
+      {VIS.map((v) => {
+        const Icon = VISIBILITY_ICON[v]
+        return (
+          <RadioGroupItem key={v} value={v}>
+            <RadioGroupItemTitle className="flex items-center gap-2">
+              <Icon className="size-4" aria-hidden="true" />
+              {app.visibility.levels[v]}
+            </RadioGroupItemTitle>
+            <RadioGroupItemDescription className="text-sm">{app.visibility.help[v]}</RadioGroupItemDescription>
+          </RadioGroupItem>
+        )
+      })}
+    </RadioGroup>
   )
 }
 
@@ -459,20 +451,16 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className={cn("text-sm font-bold", hideLabel && "sr-only")}>
+      <Label htmlFor={id} className={cn(hideLabel && "sr-only")}>
         {label}
-      </label>
+      </Label>
       {children}
       {help ? (
         <p id={`${id}-help`} className="text-xs text-muted-foreground">
           {help}
         </p>
       ) : null}
-      {error ? (
-        <p role="alert" className="text-sm font-semibold text-destructive">
-          {error}
-        </p>
-      ) : null}
+      <FieldError>{error}</FieldError>
     </div>
   )
 }

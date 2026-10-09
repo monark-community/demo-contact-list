@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { AddressDiff } from "@/components/diagrams/address-diff"
 import { Button } from "@/components/ui/button"
 import { InfoTip } from "@/components/ui/info-tip"
+import { Input } from "@/components/ui/input"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href } from "@/i18n/config"
 import { t } from "@/i18n/t"
@@ -120,16 +121,16 @@ export function CheckView() {
           <label htmlFor="check-input" className="sr-only">
             {c.label}
           </label>
-          <input
+          <Input
             id="check-input"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder={c.placeholder}
             autoComplete="off"
             spellCheck={false}
-            className="h-12 w-full min-w-0 rounded-full sm:flex-1 border border-input bg-card px-5 font-mono text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 sm:text-base"
+            className="h-12 px-4 font-mono sm:flex-1 md:text-base"
           />
-          <Button type="submit" size="lg" disabled={!value.trim() || phase.kind === "scanning"} className="h-12">
+          <Button type="submit" size="lg" disabled={!value.trim() || phase.kind === "scanning"}>
             <ScanSearchIcon aria-hidden="true" />
             {c.submit}
           </Button>
@@ -139,17 +140,19 @@ export function CheckView() {
           <p className="text-xs font-semibold text-muted-foreground">{c.samplesLabel}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {SAMPLES.map((s) => (
-              <button
+              <Button
                 key={s.key}
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setValue(s.value)
                   void check(s.value)
                 }}
-                className="inline-flex h-9 items-center rounded-full border border-input px-3.5 text-sm font-semibold transition-colors hover:bg-muted pointer-coarse:h-11"
+                className="pointer-coarse:h-11"
               >
                 {c.samples[s.key]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -1,19 +1,22 @@
 "use client"
 
-import { AppWindowIcon, ContactIcon, Loader2Icon, LockKeyholeIcon, ScanSearchIcon, WalletIcon, XCircleIcon } from "lucide-react"
+import { AppWindowIcon, ContactIcon, Loader2Icon, LockKeyholeIcon, ScanSearchIcon, WalletIcon, XCircleIcon, type LucideIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
+import { toast } from "sonner"
 
+import { AppLoading } from "@/components/ui/app-loading"
+import { AppTabs } from "@/components/ui/app-tabs"
 import { Button } from "@/components/ui/button"
+import { DemoControls } from "@/components/ui/demo-controls"
+import { Skeleton } from "@/components/ui/skeleton"
 import { href } from "@/i18n/config"
-import { useDemo, usePrompt, useStorageOk } from "@/lib/demo/store"
+import { resetDemo, setSettings, useDemo, usePrompt, useStorageOk } from "@/lib/demo/store"
 import { connectWallet } from "@/lib/demo/wallet"
-import { cn } from "@/lib/utils"
 
 import { useAppCopy } from "./app-provider"
-import { DemoControls } from "./demo-controls"
 
 /**
  * App chrome under the site header: ONE compact bar with the section tabs on
@@ -36,7 +39,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
         </p>
       ) : null}
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-6 lg:py-10">
-        {!demo ? <AppLoading label={app.loading} /> : !connected ? <UnlockGate /> : children}
+        {!demo ? <ListSkeleton label={app.loading} /> : !connected ? <UnlockGate /> : children}
       </div>
     </div>
   )
@@ -46,56 +49,72 @@ function AppBar({ connected }: { connected: boolean }) {
   const { app, locale } = useAppCopy()
   const pathname = usePathname() ?? ""
   const base = href(locale, "/app")
-  const tabs = [
-    { href: base, label: app.tabs.contacts, short: app.tabs.contacts, icon: ContactIcon, active: pathname === base || pathname.startsWith(`${base}/contacts`) || pathname === `${base}/new` },
-    { href: `${base}/check`, label: app.tabs.check, short: app.tabs.checkShort, icon: ScanSearchIcon, active: pathname.startsWith(`${base}/check`) },
-    { href: `${base}/apps`, label: app.tabs.apps, short: app.tabs.appsShort, icon: AppWindowIcon, active: pathname.startsWith(`${base}/apps`) },
-  ]
+  const tab = (path: string, label: string, short: string, Icon: LucideIcon, active: boolean) => ({
+    href: `${base}${path}`,
+    label: (
+      <>
+        <span className="sm:hidden">{short}</span>
+        <span className="hidden sm:inline">{label}</span>
+      </>
+    ),
+    icon: <Icon />,
+    iconDesktopOnly: true,
+    active,
+  })
+  const tabs = connected
+    ? [
+        tab("", app.tabs.contacts, app.tabs.contacts, ContactIcon, pathname === base || pathname.startsWith(`${base}/contacts`) || pathname === `${base}/new`),
+        tab("/check", app.tabs.check, app.tabs.checkShort, ScanSearchIcon, pathname.startsWith(`${base}/check`)),
+        tab("/apps", app.tabs.apps, app.tabs.appsShort, AppWindowIcon, pathname.startsWith(`${base}/apps`)),
+      ]
+    : []
+  return <AppTabs tabs={tabs} pathname={pathname} LinkComponent={Link} label={app.tabs.label} actions={<AppDemoControls />} />
+}
+
+/** The app bar's one demo element: the (simulated) network, opening the demo controls. */
+function AppDemoControls() {
+  const demo = useDemo()
+  const { app, seed, locale, close } = useAppCopy()
+  const c = app.demo
+  if (!demo) return null
   return (
-    <div className="border-b bg-secondary/40">
-      <div className="mx-auto flex min-h-13 max-w-6xl items-center gap-2 px-4 sm:px-6">
-        {connected ? (
-          <nav aria-label={app.tabs.label} className="min-w-0 flex-1">
-            <ul className="-mx-1 flex min-w-0 items-center gap-0.5 overflow-x-auto px-1 py-2 [scrollbar-width:none] sm:gap-1">
-              {tabs.map((t) => (
-                <li key={t.href} className="shrink-0">
-                  <Link
-                    href={t.href}
-                    aria-current={t.active ? "page" : undefined}
-                    className={cn(
-                      "inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm font-semibold transition-colors duration-150 sm:gap-2 sm:px-3.5",
-                      t.active ? "bg-card text-foreground ring-1 ring-border" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <t.icon className="hidden size-4 sm:block" aria-hidden="true" />
-                    <span className="sm:hidden">{t.short}</span>
-                    <span className="hidden sm:inline">{t.label}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ) : (
-          <div className="flex-1" />
-        )}
-        <div className="shrink-0">
-          <DemoControls />
-        </div>
-      </div>
-    </div>
+    <DemoControls
+      networkName={app.network}
+      openLabel={c.open}
+      title={c.title}
+      slow={demo.settings.slow}
+      onSlowChange={(v) => setSettings({ slow: v })}
+      slowLabel={c.slow}
+      slowHint={c.slowHelp}
+      failNext={demo.settings.failNext}
+      onFailNextChange={(v) => setSettings({ failNext: v })}
+      failNextLabel={c.failNext}
+      failNextHint={c.failNextHelp}
+      onReset={() => {
+        resetDemo(seed, locale)
+        toast.success(c.resetDone)
+      }}
+      resetLabel={c.reset}
+      resetHint={c.resetHelp}
+      resetConfirmTitle={c.resetConfirm}
+      resetConfirmBody={c.resetConfirmBody}
+      resetConfirmLabel={c.resetDo}
+      cancelLabel={c.cancel}
+      closeLabel={close}
+    />
   )
 }
 
-export function AppLoading({ label }: { label: string }) {
+/** The contact list's shape: title, search pill, rows. */
+function ListSkeleton({ label }: { label: string }) {
   return (
-    <div role="status" aria-live="polite" className="flex flex-col gap-4">
-      <span className="sr-only">{label}</span>
-      <div className="h-9 w-56 animate-pulse rounded-full bg-muted" />
-      <div className="h-11 w-full animate-pulse rounded-full bg-muted" />
+    <AppLoading label={label}>
+      <Skeleton className="h-9 w-56 rounded-full" />
+      <Skeleton className="h-11 w-full rounded-full" />
       {[0, 1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+        <Skeleton key={i} className="h-20 rounded-2xl" />
       ))}
-    </div>
+    </AppLoading>
   )
 }
 
@@ -115,13 +134,13 @@ function UnlockGate() {
           <Loader2Icon className="size-4 animate-spin text-primary" aria-hidden="true" />
           {g.decrypting}
         </p>
-        <div className="h-11 w-full animate-pulse rounded-full bg-muted" />
+        <Skeleton className="h-11 w-full rounded-full" />
         {[0, 1, 2, 3, 4].map((i) => (
           <div key={i} className="flex h-20 items-center gap-4 rounded-2xl border px-4">
-            <div className="size-10 animate-pulse rounded-full bg-muted" />
+            <Skeleton className="size-10 rounded-full" />
             <div className="flex flex-1 flex-col gap-2">
-              <div className="h-3.5 w-40 animate-pulse rounded-full bg-muted" />
-              <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
+              <Skeleton className="h-3.5 w-40 rounded-full" />
+              <Skeleton className="h-3 w-24 rounded-full" />
             </div>
           </div>
         ))}

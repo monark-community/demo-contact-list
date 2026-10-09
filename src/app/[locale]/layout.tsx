@@ -4,9 +4,9 @@ import { notFound } from "next/navigation"
 
 import "../globals.css"
 
-import { SiteFooter } from "@/components/site/footer"
-import { SiteHeader } from "@/components/site/header"
-import { ThemeProvider } from "@/components/site/theme"
+import { Footer } from "@/components/site/footer"
+import { Header } from "@/components/site/header"
+import { ThemeProvider } from "@/components/ui/theme-toggle"
 import { isLocale, locales, SITE_URL } from "@/i18n/config"
 import { getDictionary } from "@/i18n"
 
@@ -55,6 +55,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const { locale } = await params
   if (!isLocale(locale)) notFound()
   const dict = getDictionary(locale)
+  const c = dict.common
 
   return (
     <html lang={locale} className={nunito.variable} suppressHydrationWarning>
@@ -64,13 +65,32 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             href="#main"
             className="sr-only z-50 rounded-full bg-primary px-4 py-2 font-bold text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
           >
-            {dict.common.skip}
+            {c.skip}
           </a>
-          <SiteHeader locale={locale} dict={dict} />
+          <Header
+            locale={locale}
+            copy={{
+              common: {
+                product: c.product,
+                homeLabel: c.homeLabel,
+                nav: c.nav,
+                launchDemo: c.launchDemo,
+                menu: c.menu,
+                menuTitle: c.menuTitle,
+                closeMenu: c.closeMenu,
+                theme: c.theme,
+                language: c.language,
+                demoChip: c.demoChip,
+                demoBadge: c.demoBadge,
+              },
+              wallet: dict.app.wallet,
+              signIn: dict.app.signIn,
+            }}
+          />
           <main id="main" tabIndex={-1} className="flex flex-1 flex-col outline-none">
             {children}
           </main>
-          <SiteFooter locale={locale} dict={dict} />
+          <Footer locale={locale} dict={dict} />
         </ThemeProvider>
       </body>
     </html>

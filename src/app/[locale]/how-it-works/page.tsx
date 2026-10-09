@@ -4,8 +4,10 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { TagChip, TrustChip, VerifiedMark, VisibilityChip } from "@/components/demo/chips"
-import { SectionDivider } from "@/components/site/section-divider"
 import { Button } from "@/components/ui/button"
+import { Disclosure } from "@/components/ui/disclosure"
+import { SectionDivider } from "@/components/ui/section-divider"
+import { SectionHeading } from "@/components/ui/section-heading"
 import { WalletAvatar } from "@/components/ui/wallet"
 import { href, isLocale } from "@/i18n/config"
 import { getDictionary, t } from "@/i18n"
@@ -60,9 +62,7 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
       <section className="border-y bg-card/60" aria-labelledby="anatomy-title">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:py-20">
           <div>
-            <h2 id="anatomy-title" className="text-3xl font-bold tracking-display">
-              {a.title}
-            </h2>
+            <SectionHeading titleId="anatomy-title" title={a.title} />
             <ol className="mt-8 grid gap-5 sm:grid-cols-2">
               {parts.map((p, i) => (
                 <li key={p.title} className="flex gap-3">
@@ -115,10 +115,7 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
 
       {/* Storage tiers */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="storage-title">
-        <h2 id="storage-title" className="text-3xl font-bold tracking-display">
-          {h.storage.title}
-        </h2>
-        <p className="mt-3 max-w-[60ch] text-muted-foreground">{h.storage.body}</p>
+        <SectionHeading titleId="storage-title" title={h.storage.title} lead={h.storage.body} />
         <figure aria-label={h.storage.label} className="relative mt-10">
           <div className="absolute top-8 right-[16%] left-[16%] hidden h-0.5 bg-primary md:block" aria-hidden="true" />
           <ol className="relative grid gap-8 md:grid-cols-3">
@@ -146,14 +143,11 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
         <p className="mt-8 text-sm text-muted-foreground">{h.storage.fee}</p>
       </section>
 
-      <SectionDivider />
+      <SectionDivider contained />
 
       {/* Trust signals */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="trust-title">
-        <h2 id="trust-title" className="max-w-2xl text-3xl font-bold tracking-display">
-          {h.trust.title}
-        </h2>
-        <p className="mt-3 max-w-[60ch] text-muted-foreground">{h.trust.body}</p>
+        <SectionHeading titleId="trust-title" title={h.trust.title} lead={h.trust.body} className="max-w-2xl" />
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
           {h.trust.items.map((item, i) => {
             const Icon = SIGNAL_ICONS[i] ?? ShieldHalfIcon
@@ -177,10 +171,7 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
       <section className="border-y bg-card/60" aria-labelledby="check-title">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:py-20">
           <div>
-            <h2 id="check-title" className="text-3xl font-bold tracking-display">
-              {h.check.title}
-            </h2>
-            <p className="mt-3 max-w-[48ch] text-muted-foreground">{h.check.body}</p>
+            <SectionHeading titleId="check-title" title={h.check.title} lead={h.check.body} />
           </div>
           <figure aria-label={h.check.label}>
             <ol className="relative flex flex-col gap-6 border-l-2 border-primary pl-8">
@@ -200,16 +191,12 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
 
       {/* Developers */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="dev-title">
-        <h2 id="dev-title" className="text-3xl font-bold tracking-display">
-          {h.dev.title}
-        </h2>
-        <p className="mt-3 max-w-[60ch] text-muted-foreground">{h.dev.body}</p>
-        <details className="group mt-6 rounded-3xl border bg-card">
-          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-bold sm:px-6 [&::-webkit-details-marker]:hidden">
-            {h.dev.show}
-            <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
-          </summary>
-          <div className="grid gap-8 border-t px-5 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <SectionHeading titleId="dev-title" title={h.dev.title} lead={h.dev.body} />
+        <Disclosure
+          summary={h.dev.show}
+          className="mt-6"
+          contentClassName="grid gap-8 px-5 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
+        >
             <div>
               <h3 className="font-bold">{h.dev.scopesTitle}</h3>
               <dl className="mt-3 flex flex-col gap-3">
@@ -230,16 +217,13 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
                 <code>{code(h.dev.codeInside, h.dev.codeNotes, dict.seed.mainWallet)}</code>
               </pre>
             </figure>
-          </div>
-        </details>
+        </Disclosure>
       </section>
 
       {/* FAQ */}
       <section aria-labelledby="faq-title" className="border-t">
         <div className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
-          <h2 id="faq-title" className="text-3xl font-bold tracking-display">
-            {h.faq.title}
-          </h2>
+          <SectionHeading titleId="faq-title" title={h.faq.title} />
           <div className="mt-8 divide-y rounded-3xl border bg-card">
             {h.faq.items.map((f) => (
               <details key={f.q} className="group px-5 sm:px-6">
@@ -257,11 +241,7 @@ export default async function HowItWorksPage({ params }: PageProps<"/[locale]/ho
       {/* CTA */}
       <section className="border-t" aria-labelledby="cta-title">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 id="cta-title" className="text-3xl font-bold tracking-display">
-              {h.cta.title}
-            </h2>
-          </div>
+          <SectionHeading titleId="cta-title" title={h.cta.title} />
           <Button asChild size="lg">
             <Link href={href(locale, "/app/check")}>
               {h.cta.button}
